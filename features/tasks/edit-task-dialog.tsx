@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { tasksService } from "./services/tasks.service"
+import { useTasksContext } from "./context/tasks-context"
 import type { Task } from "@/lib/types"
 
 interface EditTaskDialogProps {
@@ -31,6 +31,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
   const [priority, setPriority] = useState<"low" | "medium" | "high">(task.priority)
   const [dueDate, setDueDate] = useState(task.dueDate ? task.dueDate.split("T")[0] : "")
   const [loading, setLoading] = useState(false)
+  const { updateTask } = useTasksContext()
 
   useEffect(() => {
     setTitle(task.title)
@@ -44,7 +45,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
     setLoading(true)
 
     try {
-      const result = await tasksService.updateTask(task.id, {
+      const result = await updateTask(task.id, {
         title,
         description,
         priority,
@@ -55,7 +56,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onTaskUpdated }: Edit
         onTaskUpdated?.()
       }
     } catch (error) {
-      console.error("[v0] Update task error:", error)
+      console.error("[TaskFlow] Update task error:", error)
     } finally {
       setLoading(false)
     }

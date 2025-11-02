@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import { useLists } from "@/features/lists/hooks/use-lists"
-import { useTasks } from "@/features/tasks/hooks/use-tasks"
+import { TasksProvider, useTasksContext } from "@/features/tasks/context/tasks-context"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CheckCircle2, LogOut, Loader2, Plus } from "lucide-react"
@@ -17,14 +17,14 @@ import { DeleteListDialog } from "@/features/lists/delete-list-dialog"
 import { CreateTaskDialog } from "@/features/tasks/create-task-dialog"
 import { TaskItem } from "@/features/tasks/task-item"
 
-export default function ListDetailPage() {
+function ListDetailContent() {
   const router = useRouter()
   const params = useParams()
   const listId = params.id as string
 
   const { user, loading: authLoading, logout } = useAuth()
   const { lists, loading: listsLoading } = useLists()
-  const { tasks, loading: tasksLoading } = useTasks(listId)
+  const { tasks, loading: tasksLoading } = useTasksContext()
 
   const [showCreateListDialog, setShowCreateListDialog] = useState(false)
   const [showEditListDialog, setShowEditListDialog] = useState(false)
@@ -164,5 +164,16 @@ export default function ListDetailPage() {
       />
       <CreateTaskDialog open={showCreateTaskDialog} onOpenChange={setShowCreateTaskDialog} listId={listId} />
     </div>
+  )
+}
+
+export default function ListDetailPage() {
+  const params = useParams()
+  const listId = params.id as string
+
+  return (
+    <TasksProvider listId={listId}>
+      <ListDetailContent />
+    </TasksProvider>
   )
 }

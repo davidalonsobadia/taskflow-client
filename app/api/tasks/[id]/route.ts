@@ -1,23 +1,88 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { requireAuth } from "@/lib/auth"
+import { apiFetch, ApiError } from "@/lib/api-client"
+import { config } from "@/lib/config"
+import { getAuthToken } from "@/lib/auth"
+import { type TaskResponse, transformTaskResponse } from "@/lib/types"
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAuth()
+    const token = await getAuthToken()
+
+    if (!token) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
+    }
+
+    const { id } = await params
+
+    // Call backend API to get task by ID
+    const backendTask = await apiFetch<TaskResponse>(config.api.endpoints.backend.tasks.byId(id), {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    // Transform backend response to frontend format
+    const task = transformTaskResponse(backendTask)
+
+    return NextResponse.json({
+      success: true,
+      data: task,
+    })
+  } catch (error) {
+    console.error("[TaskFlow] Get task error:", error)
+
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.status },
+      )
+    }
+
+    return NextResponse.json({ success: false, message: "Failed to fetch task" }, { status: 500 })
+  }
+}
+
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const token = await getAuthToken()
+
+    if (!token) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
+    }
+
     const { id } = await params
     const updates = await request.json()
 
-    const task = db.getTaskById(id)
-    if (!task) {
-      return NextResponse.json({ success: false, message: "Task not found" }, { status: 404 })
+    // Transform camelCase to snake_case for backend
+    const requestBody: any = {}
+    if (updates.title !== undefined) {
+      requestBody.title = updates.title
+    }
+    if (updates.description !== undefined) {
+      requestBody.description = updates.description
+    }
+    if (updates.priority !== undefined) {
+      requestBody.priority = updates.priority
+    }
+    if (updates.dueDate !== undefined) {
+      requestBody.due_date = updates.dueDate
+    }
+    if (updates.completed !== undefined) {
+      requestBody.completed = updates.completed
     }
 
-    if (task.userId !== user.id) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 403 })
-    }
+    // Call backend API to update task
+    const backendTask = await apiFetch<TaskResponse>(config.api.endpoints.backend.tasks.byId(id), {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(requestBody),
+    })
 
-    const updatedTask = db.updateTask(id, updates)
+    // Transform backend response to frontend format
+    const updatedTask = transformTaskResponse(backendTask)
 
     return NextResponse.json({
       success: true,
@@ -25,33 +90,51 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       message: "Task updated successfully",
     })
   } catch (error) {
-    console.error("[v0] Update task error:", error)
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
+    console.error("[TaskFlow] Update task error:", error)
+
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.status },
+      )
+    }
+
+    return NextResponse.json({ success: false, message: "Failed to update task" }, { status: 500 })
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAuth()
+    const token = await getAuthToken()
+
+    if (!token) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
+    }
+
     const { id } = await params
 
-    const task = db.getTaskById(id)
-    if (!task) {
-      return NextResponse.json({ success: false, message: "Task not found" }, { status: 404 })
-    }
-
-    if (task.userId !== user.id) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 403 })
-    }
-
-    db.deleteTask(id)
+    // Call backend API to delete task
+    const result = await apiFetch(config.api.endpoints.backend.tasks.byId(id), {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
 
     return NextResponse.json({
       success: true,
-      message: "Task deleted successfully",
+      message: result.message || "Task deleted successfully",
     })
   } catch (error) {
-    console.error("[v0] Delete task error:", error)
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
+    console.error("[TaskFlow] Delete task error:", error)
+
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.status },
+      )
+    }
+
+    return NextResponse.json({ success: false, message: "Failed to delete task" }, { status: 500 })
   }
 }

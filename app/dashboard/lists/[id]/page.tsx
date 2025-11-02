@@ -3,21 +3,21 @@
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { listsApi } from "@/features/lists/api"
-import { tasksApi } from "@/features/tasks/api"
-import type { List, Task } from "@/lib/types"
+import { TasksProvider, useTasksContext } from "@/features/tasks/context/tasks-context"
+import type { List } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { CreateTaskDialog } from "@/features/tasks/create-task-dialog"
 import { TaskItem } from "@/features/tasks/task-item"
 import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-export default function ListDetailPage() {
+function ListDetailContent() {
   const router = useRouter()
   const params = useParams()
   const listId = params.id as string
 
   const [list, setList] = useState<List | null>(null)
-  const [tasks, setTasks] = useState<Task[]>([])
+  const { tasks, loading: tasksLoading } = useTasksContext()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -35,13 +35,8 @@ export default function ListDetailPage() {
         }
         setList(currentList)
       }
-
-      const tasksResult = await tasksApi.getTasks(listId)
-      if (tasksResult.success && tasksResult.data) {
-        setTasks(tasksResult.data)
-      }
     } catch (error) {
-      console.error("[v0] Load data error:", error)
+      console.error("[TaskFlow] Load data error:", error)
       router.push("/dashboard")
     } finally {
       setLoading(false)
@@ -91,7 +86,7 @@ export default function ListDetailPage() {
               {tasks.length} {tasks.length === 1 ? "task" : "tasks"} total • {completedTasks.length} completed
             </p>
           </div>
-          <CreateTaskDialog listId={listId} onTaskCreated={loadData} />
+          <CreateTaskDialog listId={listId} />
         </div>
 
         <Tabs defaultValue="active" className="w-full">
@@ -107,12 +102,12 @@ export default function ListDetailPage() {
                 <CheckCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No active tasks</h3>
                 <p className="text-muted-foreground mb-4">Create a new task to get started</p>
-                <CreateTaskDialog listId={listId} onTaskCreated={loadData} />
+                <CreateTaskDialog listId={listId} />
               </div>
             ) : (
               <div className="space-y-3">
                 {activeTasks.map((task) => (
-                  <TaskItem key={task.id} task={task} onTaskUpdated={loadData} onTaskDeleted={loadData} />
+                  <TaskItem key={task.id} task={task} />
                 ))}
               </div>
             )}
@@ -126,7 +121,7 @@ export default function ListDetailPage() {
             ) : (
               <div className="space-y-3">
                 {completedTasks.map((task) => (
-                  <TaskItem key={task.id} task={task} onTaskUpdated={loadData} onTaskDeleted={loadData} />
+                  <TaskItem key={task.id} task={task} />
                 ))}
               </div>
             )}
@@ -138,12 +133,12 @@ export default function ListDetailPage() {
                 <CheckCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No tasks yet</h3>
                 <p className="text-muted-foreground mb-4">Create your first task to get started</p>
-                <CreateTaskDialog listId={listId} onTaskCreated={loadData} />
+                <CreateTaskDialog listId={listId} />
               </div>
             ) : (
               <div className="space-y-3">
                 {tasks.map((task) => (
-                  <TaskItem key={task.id} task={task} onTaskUpdated={loadData} onTaskDeleted={loadData} />
+                  <TaskItem key={task.id} task={task} />
                 ))}
               </div>
             )}
@@ -151,5 +146,16 @@ export default function ListDetailPage() {
         </Tabs>
       </main>
     </div>
+  )
+}
+
+export default function ListDetailPage() {
+  const params = useParams()
+  const listId = params.id as string
+
+  return (
+    <TasksProvider listId={listId}>
+      <ListDetailContent />
+    </TasksProvider>
   )
 }

@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { EditTaskDialog } from "./edit-task-dialog"
 import { DeleteTaskDialog } from "./delete-task-dialog"
-import { useTasks } from "./hooks/use-tasks"
+import { useTasksContext } from "./context/tasks-context"
 import { Calendar, Flag } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -21,7 +21,7 @@ const priorityColors = {
 }
 
 export function TaskItem({ task }: TaskItemProps) {
-  const { updateTask } = useTasks(task.listId)
+  const { updateTask } = useTasksContext()
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
@@ -29,7 +29,7 @@ export function TaskItem({ task }: TaskItemProps) {
     try {
       await updateTask(task.id, { completed: !task.completed })
     } catch (error) {
-      console.error("[v0] Toggle task error:", error)
+      console.error("[TaskFlow] Toggle task error:", error)
     }
   }
 

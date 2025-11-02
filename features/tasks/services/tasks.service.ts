@@ -34,7 +34,7 @@ export const tasksService = {
     },
   ) {
     const response = await fetch(config.api.endpoints.tasks.byId(id), {
-      method: "PATCH",
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })

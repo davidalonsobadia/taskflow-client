@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { tasksService } from "./services/tasks.service"
+import { useTasksContext } from "./context/tasks-context"
 import type { Task } from "@/lib/types"
 
 interface DeleteTaskDialogProps {
@@ -23,18 +23,19 @@ interface DeleteTaskDialogProps {
 
 export function DeleteTaskDialog({ task, open, onOpenChange, onSuccess }: DeleteTaskDialogProps) {
   const [loading, setLoading] = useState(false)
+  const { deleteTask } = useTasksContext()
 
   const handleDelete = async () => {
     setLoading(true)
 
     try {
-      const result = await tasksService.deleteTask(task.id)
+      const result = await deleteTask(task.id)
       if (result.success) {
         onOpenChange(false)
         onSuccess?.()
       }
     } catch (error) {
-      console.error("[v0] Delete task error:", error)
+      console.error("[TaskFlow] Delete task error:", error)
     } finally {
       setLoading(false)
     }

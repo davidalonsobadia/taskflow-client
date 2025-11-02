@@ -18,7 +18,7 @@ export const listsApi = {
 
   async updateList(id: string, data: { title?: string; description?: string; color?: string }) {
     const response = await fetch(`/api/lists/${id}`, {
-      method: "PATCH",
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })

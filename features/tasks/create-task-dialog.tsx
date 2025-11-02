@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus } from "lucide-react"
-import { tasksService } from "./services/tasks.service"
+import { useTasksContext } from "./context/tasks-context"
 
 interface CreateTaskDialogProps {
   listId: string
@@ -37,14 +37,14 @@ export function CreateTaskDialog({ listId, open, onOpenChange, onTaskCreated }: 
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium")
   const [dueDate, setDueDate] = useState("")
   const [loading, setLoading] = useState(false)
+  const { createTask } = useTasksContext()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const result = await tasksService.createTask({
-        listId,
+      const result = await createTask({
         title,
         description,
         priority,
@@ -59,7 +59,7 @@ export function CreateTaskDialog({ listId, open, onOpenChange, onTaskCreated }: 
         onTaskCreated?.()
       }
     } catch (error) {
-      console.error("[v0] Create task error:", error)
+      console.error("[TaskFlow] Create task error:", error)
     } finally {
       setLoading(false)
     }

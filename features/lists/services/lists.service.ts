@@ -19,7 +19,7 @@ export const listsService = {
 
   async updateList(id: string, data: { title?: string; description?: string; color?: string }) {
     const response = await fetch(config.api.endpoints.lists.byId(id), {
-      method: "PATCH",
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
