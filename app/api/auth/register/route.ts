@@ -1,50 +1,41 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { generateId, generateToken, hashPassword } from "@/lib/auth"
+import { apiFetch, ApiError } from "@/lib/api-client"
+import { config } from "@/lib/config"
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json()
+    const body = await request.json()
+    const { name, email, password } = body
 
-    // Validation
-    if (!name || !email || !password) {
-      return NextResponse.json({ success: false, message: "All fields are required" }, { status: 400 })
-    }
-
-    if (password.length < 6) {
-      return NextResponse.json({ success: false, message: "Password must be at least 6 characters" }, { status: 400 })
-    }
-
-    // Check if user exists
-    const existingUser = db.getUserByEmail(email)
-    if (existingUser) {
-      return NextResponse.json({ success: false, message: "Email already registered" }, { status: 400 })
-    }
-
-    // Create user
-    const verificationToken = generateToken()
-    const user = db.createUser({
-      id: generateId(),
-      name,
-      email,
-      password: hashPassword(password),
-      emailVerified: false,
-      verificationToken,
-      createdAt: new Date().toISOString(),
+    // Call real backend API
+    const data = await apiFetch(config.api.endpoints.backend.auth.register, {
+      method: "POST",
+      body: JSON.stringify({ name, email, password }),
     })
 
-    // In production, send verification email here
-    console.log(`[v0] Verification token for ${email}: ${verificationToken}`)
-
-    const { password: _, ...userWithoutPassword } = user
+    // Log verification token if present (for development)
+    if (data.verification_token) {
+      console.log(`[TaskFlow] Verification token for ${email}: ${data.verification_token}`)
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Registration successful! Please check your email to verify your account.",
-      user: userWithoutPassword,
+      message: data.message || "Registration successful! Please check your email to verify your account.",
+      user: data.user,
     })
   } catch (error) {
-    console.error("[v0] Registration error:", error)
-    return NextResponse.json({ success: false, message: "Registration failed" }, { status: 500 })
+    console.error("[TaskFlow] Registration error:", error)
+
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.status },
+      )
+    }
+
+    return NextResponse.json(
+      { success: false, message: "Registration failed" },
+      { status: 500 },
+    )
   }
 }

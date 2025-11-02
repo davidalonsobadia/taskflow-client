@@ -1,50 +1,50 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { generateToken, verifyPassword } from "@/lib/auth"
+import { apiFetch, ApiError } from "@/lib/api-client"
+import { config } from "@/lib/config"
 import { cookies } from "next/headers"
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const body = await request.json()
+    const { email, password } = body
 
-    if (!email || !password) {
-      return NextResponse.json({ success: false, message: "Email and password are required" }, { status: 400 })
-    }
+    // Call real backend API
+    const data = await apiFetch<{ access_token: string; token_type: string; user: any }>(
+      config.api.endpoints.backend.auth.login,
+      {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      },
+    )
 
-    const user = db.getUserByEmail(email)
-    if (!user || !verifyPassword(password, user.password)) {
-      return NextResponse.json({ success: false, message: "Invalid email or password" }, { status: 401 })
-    }
-
-    if (!user.emailVerified) {
-      return NextResponse.json(
-        { success: false, message: "Please verify your email before logging in" },
-        { status: 403 },
-      )
-    }
-
-    // Create session
-    const token = generateToken()
-    db.createSession(token, user.id)
-
-    // Set cookie
+    // Store the access token in a cookie
     const cookieStore = await cookies()
-    cookieStore.set("auth-token", token, {
+    cookieStore.set("auth-token", data.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, // 7 days
     })
 
-    const { password: _, ...userWithoutPassword } = user
-
     return NextResponse.json({
       success: true,
       message: "Login successful",
-      user: userWithoutPassword,
+      user: data.user,
+      token: data.access_token,
     })
   } catch (error) {
-    console.error("[v0] Login error:", error)
-    return NextResponse.json({ success: false, message: "Login failed" }, { status: 500 })
+    console.error("[TaskFlow] Login error:", error)
+
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.status },
+      )
+    }
+
+    return NextResponse.json(
+      { success: false, message: "Login failed" },
+      { status: 500 },
+    )
   }
 }

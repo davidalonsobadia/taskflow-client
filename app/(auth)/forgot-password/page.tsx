@@ -47,9 +47,9 @@ export default function ForgotPasswordPage() {
               </p>
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-col gap-4 pt-6">
             <Button asChild className="w-full">
-              <Link href="/reset-password">Enter reset code</Link>
+              <Link href="/login">Back to login</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
+          <CardFooter className="flex flex-col gap-4 pt-6">
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Sending..." : "Send reset link"}
             </Button>

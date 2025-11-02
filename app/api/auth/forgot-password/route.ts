@@ -1,42 +1,40 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { generateToken } from "@/lib/auth"
+import { apiFetch, ApiError } from "@/lib/api-client"
+import { config } from "@/lib/config"
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json()
+    const body = await request.json()
+    const { email } = body
 
-    if (!email) {
-      return NextResponse.json({ success: false, message: "Email is required" }, { status: 400 })
-    }
-
-    const user = db.getUserByEmail(email)
-    if (!user) {
-      // Don't reveal if email exists
-      return NextResponse.json({
-        success: true,
-        message: "If an account exists with this email, a password reset link has been sent.",
-      })
-    }
-
-    // Generate reset token
-    const resetToken = generateToken()
-    const resetTokenExpiry = Date.now() + 3600000 // 1 hour
-
-    db.updateUser(user.id, {
-      resetToken,
-      resetTokenExpiry,
+    // Call real backend API
+    const data = await apiFetch(config.api.endpoints.backend.auth.forgotPassword, {
+      method: "POST",
+      body: JSON.stringify({ email }),
     })
 
-    // In production, send reset email here
-    console.log(`[v0] Password reset token for ${email}: ${resetToken}`)
+    // Log reset token if present (for development)
+    if (data.reset_token) {
+      console.log(`[TaskFlow] Password reset token for ${email}: ${data.reset_token}`)
+    }
 
     return NextResponse.json({
       success: true,
-      message: "If an account exists with this email, a password reset link has been sent.",
+      message: data.message || "If an account exists with this email, a password reset link has been sent.",
     })
   } catch (error) {
-    console.error("[v0] Forgot password error:", error)
-    return NextResponse.json({ success: false, message: "Request failed" }, { status: 500 })
+    console.error("[TaskFlow] Forgot password error:", error)
+
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.status },
+      )
+    }
+
+    return NextResponse.json(
+      { success: false, message: "Request failed" },
+      { status: 500 },
+    )
   }
 }

@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { CreateListDialog } from "@/features/lists/create-list-dialog"
 import { ListCard } from "@/features/lists/list-card"
 import { CheckCircle2, LogOut, Loader2 } from "lucide-react"
-import { db } from "@/lib/db"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -35,7 +34,7 @@ export default function DashboardPage() {
         setLists(listsResult.data)
       }
     } catch (error) {
-      console.error("[v0] Load data error:", error)
+      console.error("[TaskFlow] Load data error:", error)
       router.push("/login")
     } finally {
       setLoading(false)
@@ -47,9 +46,9 @@ export default function DashboardPage() {
     router.push("/login")
   }
 
-  const getTaskCount = (listId: string) => {
-    const tasks = Array.from((db as any).tasks.values())
-    return tasks.filter((t: any) => t.listId === listId).length
+  // TODO: Fetch task count from API when lists/tasks endpoints are updated
+  const getTaskCount = (_listId: string) => {
+    return 0
   }
 
   if (loading) {

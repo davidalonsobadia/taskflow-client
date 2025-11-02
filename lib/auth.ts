@@ -1,21 +1,41 @@
 // Authentication utilities
 import { cookies } from "next/headers"
-import { db } from "./db"
+import { apiFetch, ApiError } from "./api-client"
+import { config } from "./config"
 
+/**
+ * Get the current authenticated user from the backend API
+ * @returns User object or null if not authenticated
+ */
 export async function getCurrentUser() {
   const cookieStore = await cookies()
   const token = cookieStore.get("auth-token")?.value
 
   if (!token) return null
 
-  const user = db.getUserByToken(token)
-  if (!user) return null
+  try {
+    const data = await apiFetch(config.api.endpoints.backend.auth.me, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
 
-  // Don't return password
-  const { password, ...userWithoutPassword } = user
-  return userWithoutPassword
+    return data.user || data
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      // Token is invalid, clear it
+      cookieStore.delete("auth-token")
+    }
+    return null
+  }
 }
 
+/**
+ * Require authentication, throw error if not authenticated
+ * @returns User object
+ * @throws Error if not authenticated
+ */
 export async function requireAuth() {
   const user = await getCurrentUser()
   if (!user) {
@@ -24,21 +44,11 @@ export async function requireAuth() {
   return user
 }
 
-export function generateToken(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36)
-}
-
-export function generateId(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36)
-}
-
-// Simple password hashing (in production, use bcrypt)
-export function hashPassword(password: string): string {
-  // This is a simple hash for demo purposes
-  // In production, use bcrypt or similar
-  return Buffer.from(password).toString("base64")
-}
-
-export function verifyPassword(password: string, hash: string): boolean {
-  return hashPassword(password) === hash
+/**
+ * Get the auth token from cookies
+ * @returns Token string or null
+ */
+export async function getAuthToken(): Promise<string | null> {
+  const cookieStore = await cookies()
+  return cookieStore.get("auth-token")?.value || null
 }

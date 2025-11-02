@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { requireAuth, generateId } from "@/lib/auth"
+import { requireAuth } from "@/lib/auth"
+import { generateId } from "@/lib/utils"
 
 export async function GET() {
   try {

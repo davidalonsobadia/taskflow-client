@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,19 +13,39 @@ import { authApi } from "@/features/auth/api"
 
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const [token, setToken] = useState("")
+  const searchParams = useSearchParams()
+  const [token, setToken] = useState<string | null>(null)
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  useEffect(() => {
+    const tokenFromUrl = searchParams.get("token")
+    if (!tokenFromUrl) {
+      setError("No reset token provided. Please use the link from your email.")
+    } else {
+      setToken(tokenFromUrl)
+    }
+  }, [searchParams])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
+    if (!token) {
+      setError("No reset token provided. Please use the link from your email.")
+      return
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match")
+      return
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters")
       return
     }
 
@@ -62,12 +82,46 @@ export default function ResetPasswordPage() {
     )
   }
 
+  if (!token && !error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Loading...</CardTitle>
+            <CardDescription className="text-center">Please wait</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error && !token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Invalid Reset Link</CardTitle>
+            <CardDescription className="text-center text-destructive">{error}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <p className="text-sm text-center text-muted-foreground">
+              Please request a new password reset link.
+            </p>
+            <Button asChild className="w-full">
+              <Link href="/forgot-password">Request New Link</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Reset your password</CardTitle>
-          <CardDescription>Enter your reset code and new password</CardDescription>
+          <CardDescription>Enter your new password</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
@@ -76,17 +130,6 @@ export default function ResetPasswordPage() {
                 {error}
               </div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="token">Reset Code</Label>
-              <Input
-                id="token"
-                type="text"
-                placeholder="Enter your reset code"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                required
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="password">New Password</Label>
               <Input
@@ -110,7 +153,7 @@ export default function ResetPasswordPage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
+          <CardFooter className="flex flex-col gap-4 pt-6">
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Resetting..." : "Reset password"}
             </Button>

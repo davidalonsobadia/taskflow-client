@@ -70,7 +70,7 @@ export default function RegisterPage() {
           </CardContent>
           <CardFooter>
             <Button asChild className="w-full">
-              <Link href="/verify-email">Enter verification code</Link>
+              <Link href="/login">Back to login</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -140,7 +140,7 @@ export default function RegisterPage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
+          <CardFooter className="flex flex-col gap-4 pt-6">
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Creating account..." : "Create account"}
             </Button>
