@@ -1,0 +1,39 @@
+services:
+  # Next.js Frontend Application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ${FRONTEND_BUILD_TARGET:-development}
+    container_name: frontend
+    image: taskflow-frontend:latest
+    env_file:
+      - .env
+    environment:
+      # Use 'http://api:8000' if backend is in same Docker network
+      # Use 'http://host.docker.internal:8000' if backend is on host machine
+      # Use 'http://localhost:8000' if backend is accessible via localhost
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://host.docker.internal:8000}
+      - NEXT_PUBLIC_API_KEY=${NEXT_PUBLIC_API_KEY}
+      - NODE_ENV=${NODE_ENV:-development}
+    ports:
+      # Expose port 3000 for local development (comment out for production)
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      # Mount source code for hot-reload in development (comment out for production)
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - frontend-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+networks:
+  frontend-network:
+
