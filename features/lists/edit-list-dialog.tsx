@@ -14,7 +14,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { listsService } from "./services/lists.service"
+import { listsApi } from "./api"
+import { listSchema } from "./schemas/list.schema"
 import type { List } from "@/lib/types"
 
 interface EditListDialogProps {
@@ -40,6 +41,7 @@ export function EditListDialog({ list, open, onOpenChange, onListUpdated }: Edit
   const [description, setDescription] = useState(list.description || "")
   const [color, setColor] = useState(list.color || COLORS[0].value)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     setTitle(list.title)
@@ -49,16 +51,26 @@ export function EditListDialog({ list, open, onOpenChange, onListUpdated }: Edit
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+
+    const validation = listSchema.safeParse({ title, description, color })
+    if (!validation.success) {
+      setError(validation.error.errors[0].message)
+      return
+    }
+
     setLoading(true)
 
     try {
-      const result = await listsService.updateList(list.id, { title, description, color })
+      const result = await listsApi.updateList(list.id, { title, description, color })
       if (result.success) {
         onOpenChange(false)
         onListUpdated?.()
+      } else {
+        setError(result.error || "Failed to update list")
       }
-    } catch (error) {
-      console.error("[v0] Update list error:", error)
+    } catch {
+      setError("An unexpected error occurred")
     } finally {
       setLoading(false)
     }
@@ -73,6 +85,9 @@ export function EditListDialog({ list, open, onOpenChange, onListUpdated }: Edit
             <DialogDescription>Update your list details</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
+            )}
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input

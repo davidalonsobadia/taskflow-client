@@ -28,24 +28,6 @@ export const config = {
           byId: (id: string) => `/api/v1/tasks/${id}`,
         },
       },
-      // Frontend API routes (proxy to backend)
-      auth: {
-        register: "/api/auth/register",
-        login: "/api/auth/login",
-        logout: "/api/auth/logout",
-        verifyEmail: "/api/auth/verify-email",
-        forgotPassword: "/api/auth/forgot-password",
-        resetPassword: "/api/auth/reset-password",
-        me: "/api/auth/me",
-      },
-      lists: {
-        base: "/api/lists",
-        byId: (id: string) => `/api/lists/${id}`,
-      },
-      tasks: {
-        base: "/api/tasks",
-        byId: (id: string) => `/api/tasks/${id}`,
-      },
     },
   },
   routes: {

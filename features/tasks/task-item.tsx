@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import { EditTaskDialog } from "./edit-task-dialog"
 import { DeleteTaskDialog } from "./delete-task-dialog"
 import { useTasksContext } from "./context/tasks-context"
-import { Calendar, Flag } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Calendar, Flag, Pencil, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 
@@ -63,47 +64,23 @@ export function TaskItem({ task }: TaskItemProps) {
               </div>
             </div>
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Edit task"
                 onClick={() => setShowEditDialog(true)}
-                className="p-2 hover:bg-accent rounded-md transition-colors"
               >
-                <span className="sr-only">Edit task</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                  <path d="m15 5 4 4" />
-                </svg>
-              </button>
-              <button
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Delete task"
                 onClick={() => setShowDeleteDialog(true)}
-                className="p-2 hover:bg-accent rounded-md transition-colors text-destructive"
+                className="text-destructive hover:text-destructive"
               >
-                <span className="sr-only">Delete task</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M3 6h18" />
-                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                </svg>
-              </button>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>

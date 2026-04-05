@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { listsService } from "./services/lists.service"
+import { listsApi } from "./api"
 import type { List } from "@/lib/types"
 
 interface DeleteListDialogProps {
@@ -28,7 +28,7 @@ export function DeleteListDialog({ list, open, onOpenChange, onSuccess }: Delete
     setLoading(true)
 
     try {
-      const result = await listsService.deleteList(list.id)
+      const result = await listsApi.deleteList(list.id)
       if (result.success) {
         onOpenChange(false)
         onSuccess?.()

@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { tasksService } from "../services/tasks.service"
+import { tasksApi } from "../api"
 import type { Task } from "@/lib/types"
 
 export function useTasks(listId: string) {
@@ -14,7 +14,7 @@ export function useTasks(listId: string) {
     if (!listId) return
     try {
       setLoading(true)
-      const result = await tasksService.getTasks(listId)
+      const result = await tasksApi.getTasks(listId)
       if (result.success && result.data) {
         setTasks(result.data)
       }
@@ -36,7 +36,7 @@ export function useTasks(listId: string) {
     dueDate?: string
   }) => {
     try {
-      const result = await tasksService.createTask({ ...data, listId })
+      const result = await tasksApi.createTask({ ...data, listId })
       if (result.success) {
         await fetchTasks()
         return { success: true }
@@ -58,7 +58,7 @@ export function useTasks(listId: string) {
     },
   ) => {
     try {
-      const result = await tasksService.updateTask(id, data)
+      const result = await tasksApi.updateTask(id, data)
       if (result.success) {
         await fetchTasks()
         return { success: true }
@@ -71,7 +71,7 @@ export function useTasks(listId: string) {
 
   const deleteTask = async (id: string) => {
     try {
-      const result = await tasksService.deleteTask(id)
+      const result = await tasksApi.deleteTask(id)
       if (result.success) {
         await fetchTasks()
         return { success: true }

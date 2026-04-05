@@ -46,11 +46,6 @@ export default function DashboardPage() {
     router.push("/login")
   }
 
-  // TODO: Fetch task count from API when lists/tasks endpoints are updated
-  const getTaskCount = (_listId: string) => {
-    return 0
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -105,7 +100,7 @@ export default function DashboardPage() {
               <ListCard
                 key={list.id}
                 list={list}
-                taskCount={getTaskCount(list.id)}
+                taskCount={list.taskCount ?? 0}
                 onListUpdated={loadData}
                 onListDeleted={loadData}
                 onListClick={() => router.push(`/dashboard/lists/${list.id}`)}

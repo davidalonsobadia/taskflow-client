@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { authService } from "../services/auth.service"
+import { authApi } from "../api"
 import { config } from "@/lib/config"
 
 export function useAuth() {
@@ -18,7 +18,7 @@ export function useAuth() {
 
   const checkAuth = async () => {
     try {
-      const result = await authService.getCurrentUser()
+      const result = await authApi.getCurrentUser()
       if (result.success) {
         setUser(result.user)
       } else {
@@ -34,7 +34,7 @@ export function useAuth() {
 
   const logout = async () => {
     try {
-      await authService.logout()
+      await authApi.logout()
       setUser(null)
       router.push(config.routes.login)
     } catch (err) {

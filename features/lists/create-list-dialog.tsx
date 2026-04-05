@@ -16,7 +16,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus } from "lucide-react"
-import { listsService } from "./services/lists.service"
+import { listsApi } from "./api"
+import { listSchema } from "./schemas/list.schema"
 
 interface CreateListDialogProps {
   open?: boolean
@@ -45,22 +46,34 @@ export function CreateListDialog({ open, onOpenChange, onListCreated }: CreateLi
   const [description, setDescription] = useState("")
   const [color, setColor] = useState(COLORS[0].value)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+
+    const validation = listSchema.safeParse({ title, description, color })
+    if (!validation.success) {
+      setError(validation.error.errors[0].message)
+      return
+    }
+
     setLoading(true)
 
     try {
-      const result = await listsService.createList({ title, description, color })
+      const result = await listsApi.createList({ title, description, color })
       if (result.success) {
         setDialogOpen(false)
         setTitle("")
         setDescription("")
         setColor(COLORS[0].value)
+        setError(null)
         onListCreated?.()
+      } else {
+        setError(result.error || "Failed to create list")
       }
-    } catch (error) {
-      console.error("[v0] Create list error:", error)
+    } catch {
+      setError("An unexpected error occurred")
     } finally {
       setLoading(false)
     }
@@ -81,6 +94,9 @@ export function CreateListDialog({ open, onOpenChange, onListCreated }: CreateLi
             <DialogDescription>Add a new list to organize your tasks</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
+            )}
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input

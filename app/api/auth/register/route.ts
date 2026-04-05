@@ -13,11 +13,6 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ name, email, password }),
     })
 
-    // Log verification token if present (for development)
-    if (data.verification_token) {
-      console.log(`[TaskFlow] Verification token for ${email}: ${data.verification_token}`)
-    }
-
     return NextResponse.json({
       success: true,
       message: data.message || "Registration successful! Please check your email to verify your account.",

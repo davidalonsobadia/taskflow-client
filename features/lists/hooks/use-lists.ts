@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { listsService } from "../services/lists.service"
+import { listsApi } from "../api"
 import type { List } from "@/lib/types"
 
 export function useLists() {
@@ -13,7 +13,7 @@ export function useLists() {
   const fetchLists = useCallback(async () => {
     try {
       setLoading(true)
-      const result = await listsService.getLists()
+      const result = await listsApi.getLists()
       if (result.success && result.data) {
         setLists(result.data)
       }
@@ -30,7 +30,7 @@ export function useLists() {
 
   const createList = async (data: { title: string; description?: string; color?: string }) => {
     try {
-      const result = await listsService.createList(data)
+      const result = await listsApi.createList(data)
       if (result.success) {
         await fetchLists()
         return { success: true }
@@ -43,7 +43,7 @@ export function useLists() {
 
   const updateList = async (id: string, data: { title?: string; description?: string; color?: string }) => {
     try {
-      const result = await listsService.updateList(id, data)
+      const result = await listsApi.updateList(id, data)
       if (result.success) {
         await fetchLists()
         return { success: true }
@@ -56,7 +56,7 @@ export function useLists() {
 
   const deleteList = async (id: string) => {
     try {
-      const result = await listsService.deleteList(id)
+      const result = await listsApi.deleteList(id)
       if (result.success) {
         await fetchLists()
         return { success: true }

@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus } from "lucide-react"
 import { useTasksContext } from "./context/tasks-context"
+import { taskSchema } from "./schemas/task.schema"
 
 interface CreateTaskDialogProps {
   listId: string
@@ -37,10 +38,19 @@ export function CreateTaskDialog({ listId, open, onOpenChange, onTaskCreated }: 
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium")
   const [dueDate, setDueDate] = useState("")
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { createTask } = useTasksContext()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+
+    const validation = taskSchema.safeParse({ title, description, priority, dueDate: dueDate || undefined })
+    if (!validation.success) {
+      setError(validation.error.errors[0].message)
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -56,10 +66,13 @@ export function CreateTaskDialog({ listId, open, onOpenChange, onTaskCreated }: 
         setDescription("")
         setPriority("medium")
         setDueDate("")
+        setError(null)
         onTaskCreated?.()
+      } else {
+        setError(result.error || "Failed to create task")
       }
-    } catch (error) {
-      console.error("[TaskFlow] Create task error:", error)
+    } catch {
+      setError("An unexpected error occurred")
     } finally {
       setLoading(false)
     }
@@ -80,6 +93,9 @@ export function CreateTaskDialog({ listId, open, onOpenChange, onTaskCreated }: 
             <DialogDescription>Add a new task to this list</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
+            )}
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input
